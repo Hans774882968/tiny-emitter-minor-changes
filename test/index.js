@@ -70,7 +70,7 @@ test('passes all arguments to event listener', function (t) {
     t.end();
   });
 
-  emitter.emit('test', 'arg1', 'arg2');
+  emitter.emit('test', null, 'arg1', 'arg2');
 });
 
 test('unsubscribes from all events with name', function (t) {
@@ -214,4 +214,36 @@ test('exports an instance', function (t) {
   t.ok(emitter, 'exports an instance')
   t.ok(emitter instanceof Emitter, 'an instance of the Emitter class');
   t.end();
+});
+
+test('emit before listen test 1', function (t) {
+  const answers = []
+  emitter.emit('hans0');
+  setTimeout(() => {
+    emitter.on('hans0', () => { answers.push('ctf0'); });
+  }, 2000);
+
+  emitter.emit('hans1', () => {
+    answers.push('reemit1');
+    emitter.emit('hans1');
+  });
+  setTimeout(() => {
+    emitter.on('hans1', () => { answers.push('ctf1'); });
+    emitter.on('hans1', () => { answers.push('ctf1'); });
+  }, 2000);
+
+  emitter.emit('hans2', () => {
+    answers.push('reemit2');
+    emitter.emit('hans2');
+  });
+  setTimeout(() => { emitter.once('hans2', () => { answers.push('ctf2'); }); }, 2000);
+
+  setTimeout(() => {
+    emitter.emit('hans0');
+  }, 2000);
+
+  setTimeout(() => {
+    t.deepEqual(answers, ['reemit1', 'ctf1', 'reemit2', 'ctf2', 'ctf0']);
+    t.end();
+  }, 2000);
 });
